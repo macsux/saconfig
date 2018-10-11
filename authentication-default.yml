@@ -1,0 +1,94 @@
+#Tomcat internal server port, not exposed outside
+server:
+  ssl:
+    keyAlias: 1
+    keyStoreType: PKCS12
+    key-store: /var/opt/certs/default.p12
+    key-store-password: 12345
+  error:
+    whitelabel:
+      enabled: false
+  port: 8181
+
+#Spring related setting for db, jersey path and mail
+spring:
+    mail:
+      host: eesrelay.gov.on.ca
+      port: 25
+    jersey:
+      applicationPath: /authentication-ms
+    application:
+      name: authentication-ms
+    jpa:
+      properties:
+        hibernate:
+          dialect: org.hibernate.dialect.Oracle10gDialect
+    datasource:
+      driver-class-name: oracle.jdbc.OracleDriver
+      url: jdbc:oracle:thin:@//cysbigdcdbora35.service.cihs.gov.on.ca:1521/saprdmo_srvc
+      username: mobile_auth
+      password: {{~~ ORACLE-PASSWORD ~~}}
+
+#Authentication OIDC related settings, only change after consulting with the dev team
+oidc:
+  issuer_uri: https://on.securekeyconcierge.com/federation
+  client_id:   {{~~ CLIENT ID ~~}}
+  client_secret: {{~~ OIDC-CLIENT-SECRET ~~}}
+  # TODO Consider having a "host.name" parameter and automatically derive this.
+  client_cb:   https://mybenefits.mcss.gov.on.ca/auth/token
+  redirect_uri: https://mybenefits.mcss.gov.on.ca/api/v1/authentication-ms/oidc/cb
+  acr_values: urn:gc-ca:cyber-auth:assurance:loa2
+  prompt: select_account
+
+jwks:
+  expiration: 86400
+
+#enrollment related settings
+enrollment:
+  email:
+    from:
+      address: mybenefits@ontario.ca
+      name: MyBenefits
+  email_fr:
+    from:
+      address: mybenefits@ontario.ca
+      name: MesPrestations
+    subjectTemplate: enrollment-subject_fr
+    template: enrollment_fr
+  validateUri: https://mybenefits.mcss.gov.on.ca/api/v1/authentication-ms/oidc/validate
+  validate_token:
+    success_uri: https://mybenefits.mcss.gov.on.ca/auth/enroll/success
+    failure_uri: https://mybenefits.mcss.gov.on.ca/auth/enroll/failure
+
+#kubernates redis setting, DevOps team should be responsible for this setting
+redis:
+  port: 80
+  host: redis
+
+# Project managers and dev team need to be consulted before changing this setting
+securekey:
+  issuer_uri: https://on.securekeyconcierge.com/federation
+  proxy_uri: none
+
+# Project manager and dev team need to be consulted before changing this setting
+curam:
+  webservice:
+    user_password_key: {{~~ CURAM-PASSWORD-KEY ~~}}
+    endpoint: https://samsprodsalb.service.cihs.gov.on.ca:9095/CuramWS2/services/MCSSLoginService?wsdl
+
+#Change to increase or decrease access token expiration time, in seconds
+token:
+    access_token_expiration: 300
+    enrollment_token_expiration: 1800
+
+#Only give the environment name if detailed exceptions from the mid-tier needed to sent to frontend
+enableDetailedExceptionProfiles: none
+
+#Logging configs for application and spring boot logs
+logging:
+  level:
+    root: INFO
+    org.mcss.samobile: INFO
+  pattern:
+    console: "%date{ISO8601} |authentication-ms| %thread |%-5level| %file:%line %M | %msg %replace(| RequestID: %X{X-Request-ID}| ){'\\| RequestID: \\ | ',''}%replace(| jti: %X{jti}| ){'\\| jti: \\| ',''}%n"
+    file: "%date{ISO8601} %-5level [%thread] [%file:%line %M] - %msg %n"

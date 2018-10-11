@@ -1,0 +1,54 @@
+#Tomcat internal server port, not exposed outside
+server:
+  ssl:
+    keyAlias: 1
+    keyStoreType: PKCS12
+    key-store: /var/opt/certs/default.p12
+    key-store-password: 12345
+  error:
+    whitelabel:
+      enabled: false
+  port: 8383
+
+#Spring related setting for db, jersey path and mail
+spring:
+  jersey:
+    applicationPath: /profile-ms
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.Oracle10gDialect
+  datasource:
+    driver-class-name: oracle.jdbc.OracleDriver
+    url: jdbc:oracle:thin:@//cysbigdcdbora35.service.cihs.gov.on.ca:1521/saprdmo_srvc
+    username: mobile_user
+    password: {{~~ ORACLE-PASSWORD ~~}}
+
+#Configs to connect to internal authentication-ms
+authentication-uri: https://authentication/authentication-ms/
+authentication-uri-jwks: jwks
+
+#kubernates redis setting, DevOps team should be responsible for this setting
+redis:
+  port: 80
+  host: redis
+
+# Project manager and dev team need to be consulted before changing this setting
+curam:
+  webservice:
+    user_password_key: {{~~ CURAM-PASSWORD-KEY ~~}}
+    endpoint: https://samsprodsalb.service.cihs.gov.on.ca:9095/CuramWS2/services/MCSSProfileService?wsdl
+
+#Only give the environment name if detailed exceptions from the mid-tier needed to sent to frontend
+enableDetailedExceptionProfiles: none
+
+#Logging configs for application and spring boot logs
+logging:
+  level:
+    root: INFO
+    org.mcss.samobile: INFO
+  pattern:
+    console: "%date{ISO8601} |profile-ms| %thread |%-5level| %file:%line %M | %msg %replace(| RequestID: %X{X-Request-ID}| ){'\\| RequestID: \\ | ',''}%replace(| jti: %X{jti}| ){'\\| jti: \\| ',''}%n"
+    file: "%date{ISO8601} %-5level [%thread] [%file:%line %M] - %msg %n"
+
+

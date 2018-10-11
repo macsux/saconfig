@@ -1,0 +1,90 @@
+#Tomcat internal server port, not exposed outside
+server:
+  ssl:
+    keyAlias: 1
+    keyStoreType: PKCS12
+    key-store: /var/opt/certs/default.p12
+    key-store-password: 12345
+  tomcat:
+    max-threads: 1000
+  port: 8888
+
+#Spring related setting for db, jersey path and mail
+spring:
+    application:
+        name: gateway
+    jersey:
+        applicationPath: /gateway-ms
+    jpa:
+      properties:
+        hibernate:
+          dialect: org.hibernate.dialect.Oracle10gDialect
+    datasource:
+      driver-class-name: oracle.jdbc.OracleDriver
+      url: jdbc:oracle:thin:@//cysbigdcdbora35.service.cihs.gov.on.ca:1521/saprdmo_srvc
+      username: mobile_auth
+      password: {{~~ ORACLE-PASSWORD ~~}}
+
+#kubernates redis setting, DevOps team should be responsible for this setting
+redis:
+  port: 80
+  host: redis
+
+#Configs to connect to internal authentication-ms
+authentication-uri: https://authentication/authentication-ms/
+authentication-uri-jwks: jwks
+authentication-uri-claims: claims
+
+# ***** Routing settings for all microservices, don't change it if you don't know what you are doing ******
+zuul:
+   timeToLive: 60000
+   host:
+      socket-timeout-millis: 120000
+      time-to-live: 30000
+   routes:
+      authentication:
+        path: /v1/authentication-ms/**
+        url: https://authentication/authentication-ms/
+      payment:
+        path: /v1/payment-ms/**
+        url: https://payment/payment-ms/
+      profile:
+        path: /v1/profile-ms/**
+        url: https://profile/profile-ms/
+      contactus:
+        path: /v1/contactus-ms/**
+        url: https://contactus/contactus-ms/
+      document:
+        path: /v1/document-ms/**
+        url: https://document/document-ms/
+      income:
+        path: /v1/income-ms/**
+        url: https://income/income-ms/
+      letter:
+        path: /v1/letter-ms/**
+        url: https://letter/letter-ms/
+      v2_profile:
+         path: /profile-ms/**
+         url: https://profile/profile-ms
+
+
+
+# Timeout setting for gateway server
+hystrix:
+  command:
+    default:
+      execution:
+        timeout:
+          enabled: false
+
+#Only give the environment name if detailed exceptions from the mid-tier needed to sent to frontend
+enableDetailedExceptionProfiles: none
+
+#Logging configs for application and spring boot logs
+logging:
+  level:
+    root: INFO
+    org.mcss.samobile: INFO
+  pattern:
+    console: "%date{ISO8601} |gateway-ms| %thread |%-5level| %file:%line %M | %msg %replace(| RequestID: %X{X-Request-ID}| ){'\\| RequestID: \\ | ',''}%replace(| jti: %X{jti}| ){'\\| jti: \\| ',''}%n"
+    file: "%date{ISO8601} %-5level [%thread] [%file:%line %M] - %msg %n"
