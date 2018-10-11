@@ -1,14 +1,3 @@
-#Tomcat internal server port, not exposed outside
-server:
-  ssl:
-    keyAlias: 1
-    keyStoreType: PKCS12
-    key-store: /var/opt/certs/default.p12
-    key-store-password: 12345
-  tomcat:
-    max-threads: 1000
-  port: 8888
-
 #Spring related setting for db, jersey path and mail
 spring:
     application:
